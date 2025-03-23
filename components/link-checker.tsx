@@ -91,7 +91,7 @@ export function LinkChecker() {
       setHasSearched(true)
 
       // Validate URL format
-      let urlToCheck = url
+      const urlToCheck = url
       const urlPattern = /^https?:\/\/\S+/
       if (!url.trim() || !urlPattern.test(url)) {
         setError({
@@ -396,49 +396,52 @@ export function LinkChecker() {
         <Card>
           <CardContent className="pt-6">
             {summary && (
-              <div className="mb-4 flex flex-wrap gap-3">
-                <Badge variant="outline" className="px-3 py-1 text-sm">
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Badge
+                  variant="outline"
+                  className="px-2 py-1 text-xs sm:px-3 sm:text-sm"
+                >
                   Total: {summary.total} links
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="border-blue-500 px-3 py-1 text-sm"
+                  className="border-blue-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
                 >
                   <LinkIcon className="mr-1 h-3 w-3" />
-                  Internal: {summary.internal} links
+                  Internal: {summary.internal}
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="border-orange-500 px-3 py-1 text-sm"
+                  className="border-orange-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
                 >
                   <ExternalLink className="mr-1 h-3 w-3" />
-                  External: {summary.external} links
+                  External: {summary.external}
                 </Badge>
                 {workingCount > 0 && (
                   <Badge
                     variant="outline"
-                    className="border-green-500 px-3 py-1 text-sm"
+                    className="border-green-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
                   >
                     <CheckCircle className="mr-1 h-3 w-3" />
-                    Working: {workingCount} links
+                    Working: {workingCount}
                   </Badge>
                 )}
                 {brokenCount > 0 && (
                   <Badge
                     variant="outline"
-                    className="border-red-500 px-3 py-1 text-sm"
+                    className="border-red-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
                   >
                     <AlertCircle className="mr-1 h-3 w-3" />
-                    Broken: {brokenCount} links
+                    Broken: {brokenCount}
                   </Badge>
                 )}
                 {summary.rss > 0 && (
                   <Badge
                     variant="outline"
-                    className="border-green-500 px-3 py-1 text-sm"
+                    className="border-green-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
                   >
                     <Rss className="mr-1 h-3 w-3" />
-                    RSS: {summary.rss} feeds
+                    RSS: {summary.rss}
                   </Badge>
                 )}
               </div>
@@ -461,21 +464,26 @@ export function LinkChecker() {
                   disabled={domainGroups.length === 0}
                 >
                   Domains{' '}
-                  {domainGroups.length > 0 && `(${domainGroups.length})`}
+                  <span className="hidden sm:inline">
+                    {domainGroups.length > 0 && `(${domainGroups.length})`}
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger value="rss" disabled={rssLinks.length === 0}>
-                  RSS Feeds {rssLinks.length > 0 && `(${rssLinks.length})`}
+                  RSS{' '}
+                  <span className="hidden sm:inline">
+                    Feeds {rssLinks.length > 0 && `(${rssLinks.length})`}
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
 
             {mainTab === 'links' && (
               <>
-                <div className="mb-4 flex flex-col gap-4 md:flex-row">
+                <div className="mb-4 flex flex-col gap-4 sm:flex-row">
                   <Tabs
                     value={activeTab}
                     onValueChange={setActiveTab}
-                    className="flex-1"
+                    className="w-full sm:flex-1"
                   >
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="all">All Links</TabsTrigger>
@@ -487,7 +495,7 @@ export function LinkChecker() {
                   <Tabs
                     value={resultFilter}
                     onValueChange={setResultFilter}
-                    className="flex-1"
+                    className="w-full sm:flex-1"
                   >
                     <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="all">All Results</TabsTrigger>
@@ -524,14 +532,16 @@ export function LinkChecker() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-md border">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50%]">URL</TableHead>
+                        <TableHead className="w-[40%] min-w-[200px]">
+                          URL
+                        </TableHead>
                         <TableHead className="w-[15%]">Type</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Result</TableHead>
+                        <TableHead className="w-[15%]">Status</TableHead>
+                        <TableHead className="w-[30%]">Result</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -551,7 +561,9 @@ export function LinkChecker() {
                               <div className="flex items-start gap-2">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-1">
-                                    <span>{link.url}</span>
+                                    <span className="line-clamp-2">
+                                      {link.url}
+                                    </span>
                                     <TooltipProvider>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
@@ -561,7 +573,7 @@ export function LinkChecker() {
                                             rel="noopener noreferrer"
                                             className="text-muted-foreground hover:text-primary"
                                           >
-                                            <ArrowUpRight className="h-3.5 w-3.5" />
+                                            <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" />
                                           </a>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -606,20 +618,20 @@ export function LinkChecker() {
                               <div className="flex items-center gap-2">
                                 {link.checking ? (
                                   <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
                                     <span>Checking...</span>
                                   </>
                                 ) : link.ok ? (
                                   <>
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                    <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-500" />
                                     <span className="text-green-500">
                                       Working
                                     </span>
                                   </>
                                 ) : (
                                   <>
-                                    <AlertCircle className="h-4 w-4 text-red-500" />
-                                    <span className="text-red-500">
+                                    <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-500" />
+                                    <span className="break-words text-red-500">
                                       {link.error || 'Broken'}
                                     </span>
                                   </>
@@ -636,13 +648,15 @@ export function LinkChecker() {
             )}
 
             {mainTab === 'rss' && (
-              <div className="overflow-hidden rounded-md border">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[50%]">RSS Feed URL</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[50%] min-w-[200px]">
+                        RSS Feed URL
+                      </TableHead>
+                      <TableHead className="w-[25%]">Title</TableHead>
+                      <TableHead className="w-[25%]">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -732,13 +746,15 @@ export function LinkChecker() {
             )}
 
             {mainTab === 'domains' && (
-              <div className="overflow-hidden rounded-md border">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Domain</TableHead>
-                      <TableHead>Link Count</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead className="w-[40%] min-w-[150px]">
+                        Domain
+                      </TableHead>
+                      <TableHead className="w-[20%]">Link Count</TableHead>
+                      <TableHead className="w-[40%]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
