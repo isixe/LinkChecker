@@ -352,7 +352,7 @@ export function LinkChecker() {
               placeholder="Enter website URL (e.g., example.com)"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              className="flex-1"
+              className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
               disabled={loading}
             />
             <Button type="submit" disabled={loading || !url}>

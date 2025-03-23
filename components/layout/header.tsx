@@ -11,7 +11,7 @@ export default function Header() {
           <div className="relative flex h-10 w-10 items-center justify-center transition-all duration-500">
             <img
               src="/favicon.ico"
-              alt="MetaThief Icon"
+              alt="LinkChecker Icon"
               className={`scale-110} max-h-full max-w-full transition-all duration-500`}
             />
           </div>
@@ -20,7 +20,7 @@ export default function Header() {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link
-              href="https://github.com/isixe/MetaThief"
+              href="https://github.com/isixe/LinkChecker"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1"
