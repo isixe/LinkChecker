@@ -5,6 +5,9 @@ LinkChecker is a tool for checking the validity of URLs in your Website. It help
 ## Features
 
 - Checks the validity of URLs
+- Categorize links as internal or external, and identify broken links in real-time
+- Group links by domain to see which external sites are most frequently referenced.
+- Discover and validate RSS feeds.
 
 ## Installation
 
