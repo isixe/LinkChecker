@@ -1,6 +1,6 @@
 'use client'
 
-import { clsxMerge } from '@/utils/clsx'
+import { cn } from '@/lib/utils'
 import * as ProgressPrimitive from '@radix-ui/react-progress'
 import * as React from 'react'
 
@@ -10,7 +10,7 @@ const Progress = React.forwardRef<
 >(({ className, value, ...props }, ref) => (
   <ProgressPrimitive.Root
     ref={ref}
-    className={clsxMerge(
+    className={cn(
       'relative h-4 w-full overflow-hidden rounded-full bg-secondary',
       className
     )}

@@ -1,4 +1,4 @@
-import { clsxMerge } from '@/utils/clsx'
+import { cn } from '@/lib/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 
@@ -25,7 +25,7 @@ const Alert = React.forwardRef<
   <div
     ref={ref}
     role="alert"
-    className={clsxMerge(alertVariants({ variant }), className)}
+    className={cn(alertVariants({ variant }), className)}
     {...props}
   />
 ))
@@ -37,10 +37,7 @@ const AlertTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={clsxMerge(
-      'mb-1 font-medium leading-none tracking-tight',
-      className
-    )}
+    className={cn('mb-1 font-medium leading-none tracking-tight', className)}
     {...props}
   />
 ))
@@ -52,7 +49,7 @@ const AlertDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={clsxMerge('text-sm [&_p]:leading-relaxed', className)}
+    className={cn('text-sm [&_p]:leading-relaxed', className)}
     {...props}
   />
 ))
