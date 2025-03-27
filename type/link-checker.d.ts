@@ -1,13 +1,13 @@
 declare module 'jsdom'
 
-type LinkStatus = LinkInfo & {
+export type LinkStatus = LinkInfo & {
   status: number | null
   ok: boolean
   error?: string
   checking?: boolean
 }
 
-type LinkSummary = {
+export type LinkSummary = {
   total: number
   external: number
   internal: number
@@ -17,7 +17,7 @@ type LinkSummary = {
   rss: number
 }
 
-type LinkInfo = {
+export type LinkInfo = {
   url: string
   isExternal: boolean
   text: string
@@ -25,7 +25,7 @@ type LinkInfo = {
   domain: string
 }
 
-type RssInfo = {
+export type RssInfo = {
   url: string
   title: string
   feedInfo?: {
@@ -38,7 +38,7 @@ type RssInfo = {
   checking?: boolean
 }
 
-type DomainGroup = {
+export type DomainGroup = {
   domain: string
   count: number
 }

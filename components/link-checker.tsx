@@ -32,6 +32,13 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 import {
+  DomainGroup,
+  LinkInfo,
+  LinkStatus,
+  LinkSummary,
+  RssInfo
+} from '@/type/link-checker'
+import {
   AlertCircle,
   ArrowUpRight,
   CheckCircle,
