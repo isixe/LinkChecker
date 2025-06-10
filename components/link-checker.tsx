@@ -53,6 +53,26 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 
+const TABS = [
+  { value: 'all', label: 'All Links' },
+  { value: 'external', label: 'External' },
+  { value: 'internal', label: 'Internal' }
+]
+
+const RESULT_FILTERS = [
+  { value: 'all', label: 'All Results', icon: null },
+  {
+    value: 'working',
+    label: 'Working',
+    icon: <CheckCircle className="mr-1 h-3.5 w-3.5 text-green-500" />
+  },
+  {
+    value: 'broken',
+    label: 'Broken',
+    icon: <AlertCircle className="mr-1 h-3.5 w-3.5 text-red-500" />
+  }
+]
+
 export function LinkChecker() {
   const [url, setUrl] = useState('')
   const [links, setLinks] = useState<LinkInfo[]>([])
@@ -462,9 +482,11 @@ export function LinkChecker() {
                     className="w-full sm:flex-1"
                   >
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="all">All Links</TabsTrigger>
-                      <TabsTrigger value="external">External</TabsTrigger>
-                      <TabsTrigger value="internal">Internal</TabsTrigger>
+                      {TABS.map((tab) => (
+                        <TabsTrigger key={tab.value} value={tab.value}>
+                          {tab.label}
+                        </TabsTrigger>
+                      ))}
                     </TabsList>
                   </Tabs>
 
@@ -474,15 +496,12 @@ export function LinkChecker() {
                     className="w-full sm:flex-1"
                   >
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="all">All Results</TabsTrigger>
-                      <TabsTrigger value="working">
-                        <CheckCircle className="mr-1 h-3.5 w-3.5 text-green-500" />
-                        Working
-                      </TabsTrigger>
-                      <TabsTrigger value="broken">
-                        <AlertCircle className="mr-1 h-3.5 w-3.5 text-red-500" />
-                        Broken
-                      </TabsTrigger>
+                      {RESULT_FILTERS.map((filter) => (
+                        <TabsTrigger key={filter.value} value={filter.value}>
+                          {filter.icon}
+                          {filter.label}
+                        </TabsTrigger>
+                      ))}
                     </TabsList>
                   </Tabs>
 
