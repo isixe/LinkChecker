@@ -5,7 +5,7 @@ import { GithubIcon } from '../icons/github-icon'
 
 export default function Header() {
   return (
-    <header className="border-b">
+    <header>
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center text-xl font-bold">
           <div className="relative flex h-10 w-10 items-center justify-center transition-all duration-500">

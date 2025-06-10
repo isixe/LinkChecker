@@ -2,6 +2,7 @@
 
 import type React from 'react'
 
+import LandingView from '@/components/layout/landing-view'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,17 +45,13 @@ import {
   CheckCircle,
   ExternalLink,
   Filter,
-  Globe,
   Info,
-  Link2,
   LinkIcon,
   Loader2,
   Rss,
-  Search,
-  Zap
+  Search
 } from 'lucide-react'
 import { useState } from 'react'
-import { FeatureCard } from './ui/feature-card'
 
 export function LinkChecker() {
   const [url, setUrl] = useState('')
@@ -311,73 +308,45 @@ export function LinkChecker() {
     (link) => !link.checking && !link.ok
   ).length
 
-  // Landing page content
-  const renderLandingPage = () => (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-        <FeatureCard
-          icon={<Link2 className="h-5 w-5" />}
-          title="Comprehensive Link Analysis"
-          description="Check all links on a webpage, categorize them as internal or external, and identify broken links in real-time."
-        />
-        <FeatureCard
-          icon={<Zap className="h-5 w-5" />}
-          title="Real-time Checking"
-          description="See results as they come in with a progress indicator showing the status of each link check."
-        />
-        <FeatureCard
-          icon={<Globe className="h-5 w-5" />}
-          title="Domain Grouping"
-          description="Group links by domain to see which external sites are most frequently referenced."
-        />
-        <FeatureCard
-          icon={<Rss className="h-5 w-5" />}
-          title="RSS Feed Discovery"
-          description="Discover and validate RSS feeds, if they're linked on the page."
-        />
-      </div>
-    </div>
-  )
-
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Advanced Link Checker</h1>
+        <h1 className="text-3xl font-bold md:text-4xl">
+          Advanced Link Checker
+        </h1>
         <p className="mx-auto max-w-2xl text-muted-foreground">
           Check all links on a website, identify broken links, and analyze
           different links.
         </p>
       </div>
-      <Card>
-        <CardContent className="pt-6">
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-3 sm:flex-row"
-          >
-            <Input
-              type="text"
-              placeholder="Enter website URL (e.g., example.com)"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              disabled={loading}
-            />
-            <Button type="submit" disabled={loading || !url}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {extracting ? 'Extracting links...' : 'Checking...'}
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Check Links
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-6xl pt-6">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-3 sm:flex-row"
+        >
+          <Input
+            type="text"
+            placeholder="Enter website URL (e.g., example.com)"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            disabled={loading}
+          />
+          <Button type="submit" disabled={loading || !url}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {extracting ? 'Extracting links...' : 'Checking...'}
+              </>
+            ) : (
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Check Links
+              </>
+            )}
+          </Button>
+        </form>
+      </div>
 
       {error && (
         <Alert
@@ -397,7 +366,7 @@ export function LinkChecker() {
         </Alert>
       )}
 
-      {!hasSearched && renderLandingPage()}
+      {!hasSearched && <LandingView />}
 
       {hasSearched && (links.length > 0 || rssLinks.length > 0) && (
         <Card>
