@@ -23,7 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
         'Check all links on a website, identify broken links, and analyze different links.',
       url,
       siteName: 'LinkChecker',
-      locale: 'en'
+      locale: 'en',
+      images: '/images/preview.png'
     }
   }
 }
