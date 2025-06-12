@@ -3,7 +3,8 @@ import { AlertCircle, CheckCircle } from 'lucide-react'
 export const TABS = [
   { value: 'all', label: 'All Links' },
   { value: 'external', label: 'External' },
-  { value: 'internal', label: 'Internal' }
+  { value: 'internal', label: 'Internal' },
+  { value: 'nofollow', label: 'NoFollow' }
 ]
 
 export const RESULT_FILTERS = [

@@ -11,15 +11,14 @@ export type LinkSummary = {
   total: number
   external: number
   internal: number
-  social: number
-  video: number
-  general: number
+  nofollow: number
   rss: number
 }
 
 export type LinkInfo = {
   url: string
   isExternal: boolean
+  isNoFollow: boolean
   text: string
   category: string
   domain: string

@@ -197,14 +197,16 @@ export default function Home() {
       return (
         activeTab === 'all' ||
         (activeTab === 'external' && link.isExternal) ||
-        (activeTab === 'internal' && !link.isExternal)
+        (activeTab === 'internal' && !link.isExternal) ||
+        (activeTab === 'nofollow' && link.isNoFollow) // 修正这里
       )
     }
     const matchResult = (link: LinkStatus) => {
       return (
         resultFilter === 'all' ||
         (resultFilter === 'working' && link.ok) ||
-        (resultFilter === 'broken' && !link.ok)
+        (resultFilter === 'broken' && !link.ok) ||
+        (resultFilter === 'nofollow' && link.isNoFollow) // 新增这里
       )
     }
     const matchDomain = (link: LinkStatus) => {
@@ -280,7 +282,7 @@ export default function Home() {
       const checkedResults = await getLinkCheckedResults({
         collectedLinks,
         setProgress,
-        setResults // 新增
+        setResults
       })
     } catch (err) {
       let errorMessage = 'An unknown error occurred'

@@ -80,8 +80,7 @@ export default function ResultView({ state }: ResultViewProps) {
     setSelectedDomain,
     domainGroups,
     filteredResults,
-    rssLinks,
-    links
+    rssLinks
   } = state
 
   return (
@@ -108,6 +107,13 @@ export default function ResultView({ state }: ResultViewProps) {
             >
               <ExternalLink className="mr-1 h-3 w-3" />
               External: {summary.external}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="border-purple-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
+            >
+              <ExternalLink className="mr-1 h-3 w-3" />
+              NoFollow: {summary.nofollow}
             </Badge>
             {workingCount > 0 && (
               <Badge
@@ -174,7 +180,7 @@ export default function ResultView({ state }: ResultViewProps) {
                 onValueChange={setActiveTab}
                 className="w-full sm:flex-1"
               >
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   {TABS.map((tab) => (
                     <TabsTrigger key={tab.value} value={tab.value}>
                       {tab.label}
@@ -290,6 +296,15 @@ export default function ResultView({ state }: ResultViewProps) {
                               className="border-blue-500 text-blue-600"
                             >
                               Internal
+                            </Badge>
+                          )}
+
+                          {link.isNoFollow && (
+                            <Badge
+                              variant="outline"
+                              className="border-purple-500 text-purple-600"
+                            >
+                              nofollow
                             </Badge>
                           )}
                         </TableCell>

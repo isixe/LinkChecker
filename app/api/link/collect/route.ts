@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
 
     // Extract the domain from the URL for comparing internal with external links
     const urlObj = new URL(url)
-    const baseUrl = urlObj.origin
     const sourceDomain = urlObj.hostname
 
     // Fetch the HTML content of the page with better error handling
@@ -77,6 +76,7 @@ export async function POST(request: NextRequest) {
       const links: Array<{
         url: string
         isExternal: boolean
+        isNoFollow: boolean
         text: string
         domain: string
       }> = []
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         'link[type="application/rss+xml"], link[type="application/atom+xml"]'
       )
       rssLinkElements.forEach(
-        async (element: { getAttribute: (arg0: string) => string }) => {
+        async (element: { getAttribute: (arg0: string) => string | null }) => {
           const href = element.getAttribute('href')
           const title = element.getAttribute('title') || 'RSS Feed'
 
@@ -106,24 +106,29 @@ export async function POST(request: NextRequest) {
       linkElements.forEach(
         async (element: {
           getAttribute: (arg0: string) => any
-          textContent: string
+          textContent: string | null
         }) => {
           const href = element.getAttribute('href')
           const linkText = element.textContent?.trim() || ''
           const invalidPrefixPattern = /^(#|javascript:|mailto:|tel:)/
 
           if (href && !invalidPrefixPattern.test(href)) {
-            // Convert relative URLs to absolute
             try {
               const absoluteUrl = new URL(href, url).href
               const linkDomain = new URL(absoluteUrl).hostname
 
-              // Check if the link is external (different domain)
               const isExternal = linkDomain !== sourceDomain
+
+              const relAttr = element.getAttribute('rel') || ''
+              const isNoFollow = relAttr
+                .split(/\s+/)
+                .map((s: string) => s.toLowerCase())
+                .includes('nofollow')
 
               links.push({
                 url: absoluteUrl,
                 isExternal,
+                isNoFollow,
                 text: linkText || absoluteUrl,
                 domain: linkDomain
               })
@@ -149,37 +154,12 @@ export async function POST(request: NextRequest) {
                   })
                 }
               }
-            } catch (e) {
+            } catch {
               // Skip invalid URLs
             }
           }
         }
       )
-
-      // // try common RSS paths
-      // const commonRssPaths = [
-      //   '/feed',
-      //   '/rss',
-      //   '/feed.xml',
-      //   '/atom.xml',
-      //   '/rss.xml',
-      //   '/index.xml',
-      //   '/feeds/posts/default',
-      //   '/?feed=rss2'
-      // ]
-
-      // // Create potential RSS URLs to check
-      // const potentialRssUrls = commonRssPaths.map((path) => {
-      //   return {
-      //     url: new URL(path, baseUrl).href,
-      //     title: 'RSS Feed'
-      //   }
-      // })
-
-      // // Check each potential RSS URL
-      // for (const rssUrl of potentialRssUrls) {
-      //   rssLinks.push(rssUrl)
-      // }
 
       //unique rssLinks
       rssLinks = rssLinks.filter((rss, index, self) => {
@@ -194,8 +174,8 @@ export async function POST(request: NextRequest) {
       // Count internal and external links
       const externalCount = links.filter((link) => link.isExternal).length
       const internalCount = links.length - externalCount
+      const nofollowCount = links.filter((link) => link.isNoFollow).length
 
-      // Group links by domain
       const domainGroups = groupLinksByDomain(links)
 
       return NextResponse.json({
@@ -206,11 +186,11 @@ export async function POST(request: NextRequest) {
           total: links.length,
           external: externalCount,
           internal: internalCount,
+          nofollow: nofollowCount,
           rss: rssLinks.length
         }
       })
     } catch (error) {
-      // Provide more detailed error information
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           return NextResponse.json(
