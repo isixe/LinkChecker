@@ -1,3 +1,6 @@
+import Footer from '@/components/layout/footer'
+import Header from '@/components/layout/header'
+import { Toaster } from '@/components/ui/toaster'
 import '@/styles/globals.css'
 import type { Metadata } from 'next'
 
@@ -36,8 +39,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <link rel="icon" href="/favicon.ico" />
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        <Header />
+        <main className="container mx-auto flex-1 px-4 py-10">{children} </main>
+        <Toaster />
+        <Footer />
+      </body>
     </html>
   )
 }
