@@ -126,7 +126,7 @@ export function LinkChecker() {
       }
 
       // First, extract all links from the page
-      const response = await fetch('/api/collect-links', {
+      const response = await fetch('/api/link/collect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -171,7 +171,7 @@ export function LinkChecker() {
           const rssLink = data.rssLinks[i]
 
           try {
-            const rssResponse = await fetch('/api/check-rss', {
+            const rssResponse = await fetch('/api/rss/check', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -221,7 +221,7 @@ export function LinkChecker() {
         const link = data.links[i]
 
         try {
-          const checkResponse = await fetch('/api/check-link', {
+          const checkResponse = await fetch('/api/link/check', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
