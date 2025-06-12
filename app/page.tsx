@@ -19,6 +19,23 @@ import {
 import { AlertCircle, Info, Loader2, Search } from 'lucide-react'
 import { useState } from 'react'
 
+interface PreProcessFormResult {
+  valid: boolean
+  urlToCheck?: string
+}
+
+interface GetLinkCheckedResultsParams {
+  collectedLinks: LinkInfo[]
+  setProgress: (progress: number) => void
+}
+
+interface GetFinalFilteredResultsParams {
+  results: LinkStatus[]
+  activeTab: string
+  resultFilter: string
+  selectedDomain: string
+}
+
 export default function Home() {
   const [url, setUrl] = useState('')
   const [links, setLinks] = useState<LinkInfo[]>([])
@@ -39,56 +56,201 @@ export default function Home() {
   const [selectedDomain, setSelectedDomain] = useState<string>('all')
   const [hasSearched, setHasSearched] = useState(false)
 
+  const preProcessForm = (): PreProcessFormResult => {
+    setLoading(true)
+    setExtracting(true)
+    setError(null)
+    setLinks([])
+    setResults([])
+    setRssLinks([])
+    setProgress(0)
+    setSummary(null)
+    setActiveTab('all')
+    setResultFilter('all')
+    setMainTab('links')
+    setDomainGroups([])
+    setSelectedDomain('all')
+    setHasSearched(true)
+
+    const urlToCheck = url
+    const urlPattern = /^https?:\/\/\S+/
+    if (!url.trim() || !urlPattern.test(url)) {
+      setError({
+        message: 'Invalid URL',
+        details: 'Please enter a valid URL starting with http:// or https://'
+      })
+      setLoading(false)
+      setExtracting(false)
+      return { valid: false }
+    }
+    return { valid: true, urlToCheck }
+  }
+
+  const getCollectionLinks = async ({ urlToCheck }: { urlToCheck: string }) => {
+    const response = await fetch('/api/link/collect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: urlToCheck })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to extract links', {
+        cause: data.details
+      })
+    }
+
+    return {
+      links: data.links,
+      summary: data.summary,
+      domainGroups: data.domainGroups,
+      rssLinks: data.rssLinks
+    }
+  }
+
+  const getRssCheckResults = async ({ rssLinks }: { rssLinks: RssInfo[] }) => {
+    const results: RssInfo[] = []
+
+    for (let i = 0; i < rssLinks.length; i++) {
+      const rssLink = rssLinks[i]
+      try {
+        const rssResponse = await fetch('/api/rss/check', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ url: rssLink.url })
+        })
+        const rssResult = await rssResponse.json()
+        results[i] = { ...rssLink, ...rssResult, checking: false }
+      } catch (err) {
+        results[i] = {
+          ...rssLink,
+          ok: false,
+          error:
+            err instanceof Error ? err.message : 'Failed to check RSS feed',
+          checking: false
+        }
+      }
+    }
+    return results
+  }
+
+  const getLinkCheckedResults = async ({
+    collectedLinks,
+    setProgress,
+    setResults
+  }: GetLinkCheckedResultsParams & {
+    setResults: (results: LinkStatus[]) => void
+  }) => {
+    const results: LinkStatus[] = collectedLinks.map((link) => ({
+      ...link,
+      status: null,
+      ok: false,
+      checking: true
+    }))
+
+    for (let i = 0; i < collectedLinks.length; i++) {
+      const link = collectedLinks[i]
+      try {
+        const checkResponse = await fetch('/api/link/check', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ url: link.url })
+        })
+
+        if (!checkResponse.ok) {
+          const errorData = await checkResponse.json()
+          throw new Error(errorData.error || 'Failed to check link')
+        }
+
+        const linkResult = await checkResponse.json()
+        results[i] = { ...results[i], ...linkResult, checking: false }
+      } catch (err) {
+        results[i] = {
+          ...results[i],
+          status: null,
+          ok: false,
+          error: err instanceof Error ? err.message : 'Failed to check link',
+          checking: false
+        }
+      }
+      setProgress(((i + 1) / collectedLinks.length) * 100)
+      setResults([...results]) // 实时刷新
+    }
+    return results
+  }
+
+  const getFinalFilteredResults = ({
+    results,
+    activeTab,
+    resultFilter,
+    selectedDomain
+  }: GetFinalFilteredResultsParams): LinkStatus[] => {
+    const isChecking = (link: LinkStatus) => link.checking
+    const matchTab = (link: LinkStatus) => {
+      return (
+        activeTab === 'all' ||
+        (activeTab === 'external' && link.isExternal) ||
+        (activeTab === 'internal' && !link.isExternal)
+      )
+    }
+    const matchResult = (link: LinkStatus) => {
+      return (
+        resultFilter === 'all' ||
+        (resultFilter === 'working' && link.ok) ||
+        (resultFilter === 'broken' && !link.ok)
+      )
+    }
+    const matchDomain = (link: LinkStatus) => {
+      return selectedDomain === 'all' || link.domain === selectedDomain
+    }
+
+    return results
+      .filter((link) => {
+        if (isChecking(link)) {
+          return true
+        }
+        return [matchTab, matchResult, matchDomain].every((fn) => fn(link))
+      })
+      .sort((a, b) => {
+        if (a.ok && !b.ok) {
+          return -1
+        }
+        if (!a.ok && b.ok) {
+          return 1
+        }
+        return 0
+      })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!url) return
+    if (!url) {
+      return
+    }
+
+    const { valid, urlToCheck } = preProcessForm()
+
+    if (!valid || !urlToCheck) {
+      return
+    }
 
     try {
-      setLoading(true)
-      setExtracting(true)
-      setError(null)
-      setLinks([])
-      setResults([])
-      setRssLinks([])
-      setProgress(0)
-      setSummary(null)
-      setActiveTab('all')
-      setResultFilter('all')
-      setMainTab('links')
-      setDomainGroups([])
-      setSelectedDomain('all')
-      setHasSearched(true)
+      const {
+        links: collectedLinks,
+        summary,
+        domainGroups,
+        rssLinks
+      } = await getCollectionLinks({ urlToCheck })
 
-      // Validate URL format
-      const urlToCheck = url
-      const urlPattern = /^https?:\/\/\S+/
-      if (!url.trim() || !urlPattern.test(url)) {
-        setError({
-          message: 'Invalid URL',
-          details: 'Please enter a valid URL starting with http:// or https://'
-        })
-        return
-      }
-
-      // First, extract all links from the page
-      const response = await fetch('/api/link/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url: urlToCheck })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to extract links', {
-          cause: data.details
-        })
-      }
-
-      if (data.links && data.links.length === 0) {
+      if (collectedLinks && collectedLinks.length === 0) {
         setExtracting(false)
         setLoading(false)
         setError({
@@ -99,118 +261,27 @@ export default function Home() {
         return
       }
 
-      setLinks(data.links)
-      setSummary(data.summary)
-      setDomainGroups(data.domainGroups)
+      setLinks(collectedLinks)
+      setSummary(summary)
+      setDomainGroups(domainGroups)
       setExtracting(false)
 
-      // Initialize RSS links
-      if (data.rssLinks && data.rssLinks.length > 0) {
-        const initialRssLinks = data.rssLinks.map((link: RssInfo) => ({
+      if (rssLinks && rssLinks.length > 0) {
+        const initialRssLinks = rssLinks.map((link: RssInfo) => ({
           ...link,
           checking: true
         }))
         setRssLinks(initialRssLinks)
 
-        // Check each RSS link
-        for (let i = 0; i < data.rssLinks.length; i++) {
-          const rssLink = data.rssLinks[i]
-
-          try {
-            const rssResponse = await fetch('/api/rss/check', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ url: rssLink.url })
-            })
-
-            const rssResult = await rssResponse.json()
-
-            // Update the RSS link result
-            setRssLinks((prev) =>
-              prev.map((item, index) =>
-                index === i ? { ...item, ...rssResult, checking: false } : item
-              )
-            )
-          } catch (err) {
-            setRssLinks((prev) =>
-              prev.map((item, index) =>
-                index === i
-                  ? {
-                      ...item,
-                      ok: false,
-                      error:
-                        err instanceof Error
-                          ? err.message
-                          : 'Failed to check RSS feed',
-                      checking: false
-                    }
-                  : item
-              )
-            )
-          }
-        }
+        const checkedRssLinks = await getRssCheckResults({ rssLinks })
+        setRssLinks(checkedRssLinks as RssInfo[])
       }
 
-      // Initialize results with all links as "checking"
-      const initialResults = data.links.map((link: LinkInfo) => ({
-        ...link,
-        status: null,
-        ok: false,
-        checking: true
-      }))
-      setResults(initialResults)
-
-      // Check each link one by one
-      for (let i = 0; i < data.links.length; i++) {
-        const link = data.links[i]
-
-        try {
-          const checkResponse = await fetch('/api/link/check', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ url: link.url })
-          })
-
-          if (!checkResponse.ok) {
-            const errorData = await checkResponse.json()
-            throw new Error(errorData.error || 'Failed to check link')
-          }
-
-          const linkResult = await checkResponse.json()
-
-          // Update the result for this specific link
-          setResults((prev) =>
-            prev.map((item, index) =>
-              index === i ? { ...item, ...linkResult, checking: false } : item
-            )
-          )
-        } catch (err) {
-          // Update with error
-          setResults((prev) =>
-            prev.map((item, index) =>
-              index === i
-                ? {
-                    ...item,
-                    status: null,
-                    ok: false,
-                    error:
-                      err instanceof Error
-                        ? err.message
-                        : 'Failed to check link',
-                    checking: false
-                  }
-                : item
-            )
-          )
-        }
-
-        // Update progress
-        setProgress(((i + 1) / data.links.length) * 100)
-      }
+      const checkedResults = await getLinkCheckedResults({
+        collectedLinks,
+        setProgress,
+        setResults // 新增
+      })
     } catch (err) {
       let errorMessage = 'An unknown error occurred'
       let errorDetails = undefined
@@ -227,52 +298,19 @@ export default function Home() {
     }
   }
 
-  // Filter results based on active tab, result filter, and domain
-  const filteredResults = results
-    .filter((link) => {
-      // Skip links that are still checking
-      if (link.checking) {
-        return true
-      }
+  const workingCount = results.filter((link) => {
+    return !link.checking && link.ok
+  }).length
+  const brokenCount = results.filter((link) => {
+    return !link.checking && !link.ok
+  }).length
 
-      // Filter by internal/external
-      if (
-        activeTab !== 'all' &&
-        ((activeTab === 'external' && !link.isExternal) ||
-          (activeTab === 'internal' && link.isExternal))
-      ) {
-        return false
-      }
-
-      // Filter by result status
-      if (resultFilter === 'working' && !link.ok) {
-        return false
-      }
-      if (resultFilter === 'broken' && link.ok) {
-        return false
-      }
-
-      // Filter by domain
-      if (selectedDomain !== 'all' && link.domain !== selectedDomain) {
-        return false
-      }
-
-      return true
-    })
-    .sort((a, b) => {
-      // Sort by status: working links first, then broken links
-      if (a.ok && !b.ok) return -1
-      if (!a.ok && b.ok) return 1
-      return 0
-    })
-
-  // Count working and broken links
-  const workingCount = results.filter(
-    (link) => !link.checking && link.ok
-  ).length
-  const brokenCount = results.filter(
-    (link) => !link.checking && !link.ok
-  ).length
+  const filteredResults = getFinalFilteredResults({
+    results,
+    activeTab,
+    resultFilter,
+    selectedDomain
+  })
 
   const AdvancedResultViewState: AdvancedResultViewState = {
     summary,
