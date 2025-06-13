@@ -78,12 +78,14 @@ export default function Home() {
     if (shouldAutoCheck && isAdvanced && url) {
       setShouldAutoCheck(false)
       // Simulate form submit
-      const form = document.querySelector('form')
-      if (form) {
-        form.dispatchEvent(
-          new Event('submit', { cancelable: true, bubbles: true })
-        )
-      }
+      setTimeout(() => {
+        const form = document.querySelector('form')
+        if (form) {
+          form.dispatchEvent(
+            new Event('submit', { cancelable: true, bubbles: true })
+          )
+        }
+      }, 1000)
     }
   }, [shouldAutoCheck, isAdvanced, url])
 
