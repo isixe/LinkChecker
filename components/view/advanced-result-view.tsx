@@ -27,20 +27,28 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { AdvancedLinkStatus, DomainGroup, RssInfo } from '@/type/link'
+import {
+  AdvancedLinkStatus,
+  AdvancedLinkSummary,
+  DomainGroup,
+  RssInfo
+} from '@/type/link'
 import {
   AlertCircle,
   ArrowUpRight,
+  Check,
   CheckCircle,
+  Copy,
   ExternalLink,
   Filter,
   LinkIcon,
   Loader2,
   Rss
 } from 'lucide-react'
+import { useState } from 'react'
 
 export interface AdvancedResultViewState {
-  summary: LinkSummary | null
+  summary: AdvancedLinkSummary | null
   workingCount: number
   brokenCount: number
   loading: boolean
@@ -82,6 +90,25 @@ export default function ResultView({ state }: ResultViewProps) {
     filteredResults,
     rssLinks
   } = state
+
+  const [copied, setCopied] = useState(false)
+
+  const currentFilterTab =
+    TABS.find((t) => t.value === activeTab)?.label || 'All Links'
+  const currentFilterLabel =
+    RESULT_FILTERS.find((f) => f.value === resultFilter)?.label || 'All'
+
+  const handleCopyUrls = async () => {
+    try {
+      const filteredUrls = filteredResults.map((r) => r.url).join('\n')
+      await navigator.clipboard.writeText(filteredUrls)
+
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
 
   return (
     <Card>
@@ -338,6 +365,38 @@ export default function ResultView({ state }: ResultViewProps) {
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            <div className="mb-4 flex items-center justify-between py-4">
+              <span>
+                Showing {filteredResults.length} links ({currentFilterTab} &{' '}
+                {currentFilterLabel})
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCopyUrls}
+                disabled={filteredResults.length === 0}
+                className="flex items-center gap-2"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            <div className="rounded border bg-gray-50 p-3">
+              {filteredResults.length === 0 ? (
+                <div className="py-2 text-center text-muted-foreground">
+                  No results
+                </div>
+              ) : (
+                <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap break-all font-mono text-xs">
+                  {filteredResults.map((r) => r.url).join('\n')}
+                </pre>
+              )}
             </div>
           </>
         )}
