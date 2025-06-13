@@ -5,19 +5,24 @@ import type React from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import AdvancedResultView, {
   AdvancedResultViewState
 } from '@/components/view/advanced-result-view'
+import BasicResultView, {
+  BasicResultViewState
+} from '@/components/view/basic-result-view'
 import LandingView from '@/components/view/landing-view'
 import {
+  AdvancedLinkInfo,
+  AdvancedLinkStatus,
+  AdvancedLinkSummary,
+  BasicLinkStatus,
   DomainGroup,
-  LinkInfo,
-  LinkStatus,
-  LinkSummary,
   RssInfo
 } from '@/type/link'
 import { AlertCircle, Info, Loader2, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface PreProcessFormResult {
   valid: boolean
@@ -25,12 +30,12 @@ interface PreProcessFormResult {
 }
 
 interface GetLinkCheckedResultsParams {
-  collectedLinks: LinkInfo[]
-  setProgress: (progress: number) => void
+  collectedLinks: AdvancedLinkInfo[]
+  setAdvancedProgress: (advancedProgress: number) => void
 }
 
 interface GetFinalFilteredResultsParams {
-  results: LinkStatus[]
+  results: AdvancedLinkStatus[]
   activeTab: string
   resultFilter: string
   selectedDomain: string
@@ -38,39 +43,80 @@ interface GetFinalFilteredResultsParams {
 
 export default function Home() {
   const [url, setUrl] = useState('')
-  const [links, setLinks] = useState<LinkInfo[]>([])
-  const [results, setResults] = useState<LinkStatus[]>([])
-  const [rssLinks, setRssLinks] = useState<RssInfo[]>([])
-  const [loading, setLoading] = useState(false)
-  const [extracting, setExtracting] = useState(false)
   const [error, setError] = useState<{
     message: string
     details?: string
   } | null>(null)
-  const [progress, setProgress] = useState(0)
-  const [summary, setSummary] = useState<LinkSummary | null>(null)
+
+  const [loading, setLoading] = useState(false)
+  const [extracting, setExtracting] = useState(false)
+  const [hasInputChecking, setHasInputChecking] = useState(false)
+
   const [activeTab, setActiveTab] = useState('all')
+
+  const [rssLinks, setRssLinks] = useState<RssInfo[]>([])
+  const [summary, setSummary] = useState<AdvancedLinkSummary | null>(null)
   const [resultFilter, setResultFilter] = useState('all')
   const [mainTab, setMainTab] = useState('links')
   const [domainGroups, setDomainGroups] = useState<DomainGroup[]>([])
   const [selectedDomain, setSelectedDomain] = useState<string>('all')
-  const [hasSearched, setHasSearched] = useState(false)
+
+  const basicInputRef = useRef<HTMLTextAreaElement>(null)
+  const [basicInput, setBasicInput] = useState('')
+  const [basicResults, setBasicResults] = useState<BasicLinkStatus[]>([])
+  const [basicLoading, setBasicLoading] = useState(false)
+  const [basicProgress, setBasicProgress] = useState(0)
+
+  const [advancedProgress, setAdvancedProgress] = useState(0)
+  const [advancedLinkList, setAdvancedLinkList] = useState<AdvancedLinkInfo[]>(
+    []
+  )
+  const [advancedResults, setAdvancedResults] = useState<AdvancedLinkStatus[]>(
+    []
+  )
+
+  const [isAdvanced, setIsAdvanced] = useState(false)
+  const [shouldAutoCheck, setShouldAutoCheck] = useState(false)
+
+  useEffect(() => {
+    if (shouldAutoCheck && isAdvanced && url) {
+      setShouldAutoCheck(false)
+      // Simulate form submit
+      const form = document.querySelector('form')
+      if (form) {
+        form.dispatchEvent(
+          new Event('submit', { cancelable: true, bubbles: true })
+        )
+      }
+    }
+  }, [shouldAutoCheck, isAdvanced, url])
+
+  const quickAdvancedCheck = (url: string) => {
+    setIsAdvanced(true)
+    setUrl(url)
+    setShouldAutoCheck(true)
+    setTimeout(() => {
+      if (basicInputRef.current) {
+        basicInputRef.current.blur()
+      }
+    }, 100)
+  }
 
   const preProcessForm = (): PreProcessFormResult => {
     setLoading(true)
     setExtracting(true)
     setError(null)
-    setLinks([])
-    setResults([])
+    setAdvancedLinkList([])
+    setAdvancedResults([])
     setRssLinks([])
-    setProgress(0)
+    setAdvancedProgress(0)
     setSummary(null)
     setActiveTab('all')
     setResultFilter('all')
     setMainTab('links')
     setDomainGroups([])
     setSelectedDomain('all')
-    setHasSearched(true)
+    setHasInputChecking(true)
 
     const urlToCheck = url
     const urlPattern = /^https?:\/\/\S+/
@@ -141,12 +187,12 @@ export default function Home() {
 
   const getLinkCheckedResults = async ({
     collectedLinks,
-    setProgress,
-    setResults
+    setAdvancedProgress,
+    setAdvancedResults
   }: GetLinkCheckedResultsParams & {
-    setResults: (results: LinkStatus[]) => void
+    setAdvancedResults: (results: AdvancedLinkStatus[]) => void
   }) => {
-    const results: LinkStatus[] = collectedLinks.map((link) => ({
+    const results: AdvancedLinkStatus[] = collectedLinks.map((link) => ({
       ...link,
       status: null,
       ok: false,
@@ -180,8 +226,8 @@ export default function Home() {
           checking: false
         }
       }
-      setProgress(((i + 1) / collectedLinks.length) * 100)
-      setResults([...results]) // 实时刷新
+      setAdvancedProgress(((i + 1) / collectedLinks.length) * 100)
+      setAdvancedResults([...results])
     }
     return results
   }
@@ -191,25 +237,25 @@ export default function Home() {
     activeTab,
     resultFilter,
     selectedDomain
-  }: GetFinalFilteredResultsParams): LinkStatus[] => {
-    const isChecking = (link: LinkStatus) => link.checking
-    const matchTab = (link: LinkStatus) => {
+  }: GetFinalFilteredResultsParams): AdvancedLinkStatus[] => {
+    const isChecking = (link: AdvancedLinkStatus) => link.checking
+    const matchTab = (link: AdvancedLinkStatus) => {
       return (
         activeTab === 'all' ||
         (activeTab === 'external' && link.isExternal) ||
         (activeTab === 'internal' && !link.isExternal) ||
-        (activeTab === 'nofollow' && link.isNoFollow) // 修正这里
+        (activeTab === 'nofollow' && link.isNoFollow)
       )
     }
-    const matchResult = (link: LinkStatus) => {
+    const matchResult = (link: AdvancedLinkStatus) => {
       return (
         resultFilter === 'all' ||
         (resultFilter === 'working' && link.ok) ||
         (resultFilter === 'broken' && !link.ok) ||
-        (resultFilter === 'nofollow' && link.isNoFollow) // 新增这里
+        (resultFilter === 'nofollow' && link.isNoFollow)
       )
     }
-    const matchDomain = (link: LinkStatus) => {
+    const matchDomain = (link: AdvancedLinkStatus) => {
       return selectedDomain === 'all' || link.domain === selectedDomain
     }
 
@@ -231,7 +277,61 @@ export default function Home() {
       })
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submitBasicToChecking = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setHasInputChecking(true)
+    setBasicResults([])
+    setBasicLoading(true)
+    setBasicProgress(0)
+    setError(null)
+    const urls = basicInput
+      .split('\n')
+      .map((u) => u.trim())
+      .filter((u) => /^https?:\/\/\S+/.test(u))
+    if (urls.length === 0) {
+      setError({
+        message:
+          'Please input valid links, one per line, starting with http(s)://'
+      })
+      setBasicLoading(false)
+      return
+    }
+    const results: BasicLinkStatus[] = []
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i]
+      try {
+        const res = await fetch('/api/link/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        })
+        if (!res.ok) {
+          const err = await res.json()
+          results.push({
+            url,
+            ok: false,
+            error: err.error || 'Request failed',
+            status: res.status
+          })
+        } else {
+          const data = await res.json()
+          results.push({ url, ok: data.ok, status: data.status })
+        }
+      } catch (err) {
+        results.push({
+          url,
+          ok: false,
+          error: err instanceof Error ? err.message : 'Request error',
+          status: null
+        })
+      }
+      setBasicProgress(((i + 1) / urls.length) * 100)
+      setBasicResults([...results])
+    }
+    setBasicLoading(false)
+  }
+
+  const submitAdvancedToChecking = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!url) {
@@ -263,7 +363,7 @@ export default function Home() {
         return
       }
 
-      setLinks(collectedLinks)
+      setAdvancedLinkList(collectedLinks)
       setSummary(summary)
       setDomainGroups(domainGroups)
       setExtracting(false)
@@ -281,8 +381,8 @@ export default function Home() {
 
       const checkedResults = await getLinkCheckedResults({
         collectedLinks,
-        setProgress,
-        setResults
+        setAdvancedProgress,
+        setAdvancedResults
       })
     } catch (err) {
       let errorMessage = 'An unknown error occurred'
@@ -300,26 +400,35 @@ export default function Home() {
     }
   }
 
-  const workingCount = results.filter((link) => {
+  const workingCount = advancedResults.filter((link) => {
     return !link.checking && link.ok
   }).length
-  const brokenCount = results.filter((link) => {
+  const brokenCount = advancedResults.filter((link) => {
     return !link.checking && !link.ok
   }).length
 
   const filteredResults = getFinalFilteredResults({
-    results,
+    results: advancedResults,
     activeTab,
     resultFilter,
     selectedDomain
   })
+
+  const BasicResultViewState: BasicResultViewState = {
+    workingCount: basicResults.filter((r) => r.ok).length,
+    brokenCount: basicResults.filter((r) => !r.ok).length,
+    loading: basicLoading,
+    progress: basicProgress,
+    results: basicResults,
+    onQuickAdvancedCheck: quickAdvancedCheck
+  }
 
   const AdvancedResultViewState: AdvancedResultViewState = {
     summary,
     workingCount,
     brokenCount,
     loading,
-    progress,
+    progress: advancedProgress,
     mainTab,
     setMainTab,
     activeTab,
@@ -331,48 +440,120 @@ export default function Home() {
     domainGroups,
     filteredResults,
     rssLinks,
-    links
+    links: advancedLinkList
   }
 
   return (
     <div className="mx-auto max-w-5xl">
       <div className="space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold md:text-4xl">
-            Advanced Link Checker
-          </h1>
-          <p className="mx-auto max-w-2xl text-muted-foreground">
-            Check all links on a website, identify broken links, and analyze
-            different links.
-          </p>
+          {!isAdvanced ? (
+            <>
+              <h1 className="text-3xl font-bold md:text-4xl">
+                Basic Link Checker
+              </h1>
+              <p className="mx-auto max-w-2xl text-muted-foreground">
+                Check all links list, identify broken links.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold md:text-4xl">
+                Advanced Link Checker
+              </h1>
+              <p className="mx-auto max-w-2xl text-muted-foreground">
+                Check all links on a website, identify broken links, and analyze
+                different links.
+              </p>
+            </>
+          )}
         </div>
+
+        {/* Mode Toggle */}
+        <div className="mb-8 flex justify-center">
+          <div className="rounded-full border bg-white p-1 shadow-lg">
+            <button
+              onClick={() => setIsAdvanced(false)}
+              className={`rounded-full px-6 py-2 transition-all duration-300 ${
+                !isAdvanced
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Basic Mode
+            </button>
+            <button
+              onClick={() => setIsAdvanced(true)}
+              className={`rounded-full px-6 py-2 transition-all duration-300 ${
+                isAdvanced
+                  ? 'bg-purple-500 text-white shadow-md'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              Advanced Mode
+            </button>
+          </div>
+        </div>
+
         <div className="mx-auto max-w-6xl pt-6">
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-3 sm:flex-row"
-          >
-            <Input
-              type="text"
-              placeholder="Enter website URL (e.g., example.com)"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-              disabled={loading}
-            />
-            <Button type="submit" disabled={loading || !url}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {extracting ? 'Extracting links...' : 'Checking...'}
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Check Links
-                </>
-              )}
-            </Button>
-          </form>
+          {!isAdvanced ? (
+            <form
+              onSubmit={submitBasicToChecking}
+              className="flex flex-col gap-3"
+            >
+              <Textarea
+                ref={basicInputRef}
+                className="min-h-[120px] rounded p-2 font-mono text-sm outline-none focus-visible:outline-none focus-visible:ring-0"
+                placeholder="Input one valid link per line, e.g. https://example.com"
+                value={basicInput}
+                onChange={(e) => setBasicInput(e.target.value)}
+                disabled={basicLoading}
+              />
+              <Button
+                type="submit"
+                disabled={basicLoading || !basicInput.trim()}
+              >
+                {basicLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Check Links
+                  </>
+                )}
+              </Button>
+            </form>
+          ) : (
+            <form
+              onSubmit={submitAdvancedToChecking}
+              className="flex flex-col gap-3 sm:flex-row"
+            >
+              <Input
+                type="text"
+                placeholder="Enter website URL (e.g., example.com)"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                disabled={loading}
+              />
+              <Button type="submit" disabled={loading || !url}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {extracting ? 'Extracting links...' : 'Checking...'}
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Check Links
+                  </>
+                )}
+              </Button>
+            </form>
+          )}
         </div>
 
         {error && (
@@ -395,11 +576,17 @@ export default function Home() {
           </Alert>
         )}
 
-        {!hasSearched && <LandingView />}
+        {!hasInputChecking && <LandingView />}
 
-        {hasSearched && (links.length > 0 || rssLinks.length > 0) && (
-          <AdvancedResultView state={AdvancedResultViewState} />
+        {hasInputChecking && !isAdvanced && basicResults.length > 0 && (
+          <BasicResultView state={BasicResultViewState} />
         )}
+
+        {hasInputChecking &&
+          isAdvanced &&
+          (advancedLinkList.length > 0 || rssLinks.length > 0) && (
+            <AdvancedResultView state={AdvancedResultViewState} />
+          )}
       </div>
     </div>
   )

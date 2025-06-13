@@ -27,7 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip'
-import { DomainGroup, LinkStatus, LinkSummary, RssInfo } from '@/type/link'
+import { AdvancedLinkStatus, DomainGroup, RssInfo } from '@/type/link'
 import {
   AlertCircle,
   ArrowUpRight,
@@ -54,7 +54,7 @@ export interface AdvancedResultViewState {
   selectedDomain: string
   setSelectedDomain: (domain: string) => void
   domainGroups: DomainGroup[]
-  filteredResults: LinkStatus[]
+  filteredResults: AdvancedLinkStatus[]
   rssLinks: RssInfo[]
   links: any[]
 }

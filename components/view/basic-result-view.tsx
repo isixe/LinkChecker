@@ -1,0 +1,167 @@
+import { RESULT_FILTERS } from '@/app/data/settings'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BasicLinkStatus } from '@/type/link'
+import { AlertCircle, CheckCircle, Loader2, Search } from 'lucide-react'
+import { useState } from 'react'
+
+export interface BasicResultViewState {
+  workingCount: number
+  brokenCount: number
+  loading: boolean
+  progress: number
+  results: BasicLinkStatus[]
+  onQuickAdvancedCheck: (url: string) => void
+}
+
+interface ResultViewProps {
+  state: BasicResultViewState
+}
+
+export default function ResultView({ state }: ResultViewProps) {
+  const {
+    workingCount,
+    brokenCount,
+    loading,
+    progress,
+    results,
+    onQuickAdvancedCheck
+  } = state
+
+  const [resultFilter, setResultFilter] = useState('all')
+
+  const filteredResults =
+    resultFilter === 'all'
+      ? results
+      : resultFilter === 'working'
+        ? results.filter((r) => r.ok)
+        : results.filter((r) => !r.ok)
+
+  return (
+    <div className="mt-6 rounded border bg-white p-4 shadow">
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Badge
+          variant="outline"
+          className="border-green-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
+        >
+          <CheckCircle className="mr-1 h-3 w-3" />
+          Working: {workingCount}
+        </Badge>
+        <Badge
+          variant="outline"
+          className="border-red-500 px-2 py-1 text-xs sm:px-3 sm:text-sm"
+        >
+          <AlertCircle className="mr-1 h-3 w-3" />
+          Broken: {brokenCount}
+        </Badge>
+      </div>
+      {loading && (
+        <div className="mb-2">
+          <div className="mb-1 text-sm text-muted-foreground">
+            Progress: {Math.round(progress)}%
+          </div>
+          <Progress value={progress} />
+        </div>
+      )}
+
+      <Tabs
+        value={resultFilter}
+        onValueChange={setResultFilter}
+        className="mb-4"
+      >
+        <TabsList className="grid w-full grid-cols-3">
+          {RESULT_FILTERS.map((filter) => (
+            <TabsTrigger key={filter.value} value={filter.value}>
+              {filter.icon}
+              {filter.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50%] min-w-[200px]">URL</TableHead>
+              <TableHead className="w-[15%]">Status</TableHead>
+              <TableHead className="w-[15%]">Result</TableHead>
+              <TableHead className="w-[20%]">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredResults.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="py-4 text-center text-muted-foreground"
+                >
+                  No results
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredResults.map((r, idx) => (
+                <TableRow key={idx}>
+                  <TableCell className="break-all font-mono text-xs">
+                    {r.url}
+                  </TableCell>
+                  <TableCell>
+                    {loading ? (
+                      <span className="flex items-center gap-1 text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Checking...
+                      </span>
+                    ) : typeof r.status === 'number' ? (
+                      <span>{r.status}</span>
+                    ) : (
+                      <span>None</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {loading ? (
+                      <span className="flex items-center gap-1 text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Checking...
+                      </span>
+                    ) : r.ok ? (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="h-4 w-4" /> Working
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-red-600">
+                        <AlertCircle className="h-4 w-4" /> Broken
+                        {r.error && (
+                          <span className="ml-2 text-xs text-gray-400">
+                            {r.error}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onQuickAdvancedCheck(r.url)}
+                    >
+                      <Search className="mr-1 h-4 w-4" />
+                      Advanced Check
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
