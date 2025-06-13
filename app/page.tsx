@@ -30,11 +30,6 @@ interface PreProcessFormResult {
   urlToCheck?: string
 }
 
-interface GetLinkCheckedResultsParams {
-  collectedLinks: AdvancedLinkInfo[]
-  setAdvancedProgress: (advancedProgress: number) => void
-}
-
 interface GetFinalFilteredResultsParams {
   results: AdvancedLinkStatus[]
   activeTab: string
@@ -103,7 +98,29 @@ export default function Home() {
     }, 100)
   }
 
-  const preProcessForm = (): PreProcessFormResult => {
+  function isValidUrl(url: string): boolean {
+    return /^https?:\/\/\S+$/i.test(url.trim())
+  }
+
+  const preProcessBasicForm = (input: string) => {
+    const urls = input
+      .split('\n')
+      .map((u) => u.trim())
+      .filter((u) => isValidUrl(u))
+    if (urls.length === 0) {
+      return {
+        valid: false,
+        urls,
+        error: {
+          message: 'Invalid URL',
+          details: 'Please enter a valid URL starting with http:// or https://'
+        }
+      }
+    }
+    return { valid: true, urls }
+  }
+
+  const preProcessAdvancedForm = (): PreProcessFormResult => {
     setLoading(true)
     setExtracting(true)
     setError(null)
@@ -120,8 +137,7 @@ export default function Home() {
     setHasInputChecking(true)
 
     const urlToCheck = url
-    const urlPattern = /^https?:\/\/\S+/
-    if (!url.trim() || !urlPattern.test(url)) {
+    if (!isValidUrl(url)) {
       setError({
         message: 'Invalid URL',
         details: 'Please enter a valid URL starting with http:// or https://'
@@ -187,11 +203,9 @@ export default function Home() {
   }
 
   const getLinkCheckedResults = async ({
-    collectedLinks,
-    setAdvancedProgress,
-    setAdvancedResults
-  }: GetLinkCheckedResultsParams & {
-    setAdvancedResults: (results: AdvancedLinkStatus[]) => void
+    collectedLinks
+  }: {
+    collectedLinks: AdvancedLinkInfo[]
   }) => {
     const results: AdvancedLinkStatus[] = collectedLinks.map((link) => ({
       ...link,
@@ -285,18 +299,16 @@ export default function Home() {
     setBasicLoading(true)
     setBasicProgress(0)
     setError(null)
-    const urls = basicInput
-      .split('\n')
-      .map((u) => u.trim())
-      .filter((u) => /^https?:\/\/\S+/.test(u))
-    if (urls.length === 0) {
-      setError({
-        message:
-          'Please input valid links, one per line, starting with http(s)://'
-      })
+
+    const { valid, urls, error: preError } = preProcessBasicForm(basicInput)
+    if (!valid) {
+      if (preError) {
+        setError(preError)
+      }
       setBasicLoading(false)
       return
     }
+
     const results: BasicLinkStatus[] = []
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i]
@@ -339,7 +351,7 @@ export default function Home() {
       return
     }
 
-    const { valid, urlToCheck } = preProcessForm()
+    const { valid, urlToCheck } = preProcessAdvancedForm()
 
     if (!valid || !urlToCheck) {
       return
@@ -381,9 +393,7 @@ export default function Home() {
       }
 
       const checkedResults = await getLinkCheckedResults({
-        collectedLinks,
-        setAdvancedProgress,
-        setAdvancedResults
+        collectedLinks
       })
     } catch (err) {
       let errorMessage = 'An unknown error occurred'
