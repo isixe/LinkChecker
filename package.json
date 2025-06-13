@@ -24,6 +24,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fast-xml-parser": "^5.0.9",
+    "framer-motion": "^12.17.3",
     "jsdom": "^26.0.0",
     "lucide-react": "^0.454.0",
     "next": "15.1.0",

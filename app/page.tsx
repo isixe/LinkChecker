@@ -21,6 +21,7 @@ import {
   DomainGroup,
   RssInfo
 } from '@/type/link'
+import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, Info, Loader2, Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -495,65 +496,85 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-6xl pt-6">
-          {!isAdvanced ? (
-            <form
-              onSubmit={submitBasicToChecking}
-              className="flex flex-col gap-3"
-            >
-              <Textarea
-                ref={basicInputRef}
-                className="min-h-[120px] rounded p-2 font-mono text-sm outline-none focus-visible:outline-none focus-visible:ring-0"
-                placeholder="Input one valid link per line, e.g. https://example.com"
-                value={basicInput}
-                onChange={(e) => setBasicInput(e.target.value)}
-                disabled={basicLoading}
-              />
-              <Button
-                type="submit"
-                disabled={basicLoading || !basicInput.trim()}
+        <div className="mx-auto max-w-6xl pt-6" style={{ perspective: 1200 }}>
+          <AnimatePresence mode="wait" initial={false}>
+            {!isAdvanced ? (
+              <motion.div
+                key="basic"
+                initial={{ rotateY: 90, opacity: 0 }}
+                animate={{ rotateY: 0, opacity: 1 }}
+                exit={{ rotateY: -90, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ transformStyle: 'preserve-3d' }}
               >
-                {basicLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Checking...
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Check Links
-                  </>
-                )}
-              </Button>
-            </form>
-          ) : (
-            <form
-              onSubmit={submitAdvancedToChecking}
-              className="flex flex-col gap-3 sm:flex-row"
-            >
-              <Input
-                type="text"
-                placeholder="Enter website URL (e.g., example.com)"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                disabled={loading}
-              />
-              <Button type="submit" disabled={loading || !url}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {extracting ? 'Extracting links...' : 'Checking...'}
-                  </>
-                ) : (
-                  <>
-                    <Search className="mr-2 h-4 w-4" />
-                    Check Links
-                  </>
-                )}
-              </Button>
-            </form>
-          )}
+                <form
+                  onSubmit={submitBasicToChecking}
+                  className="flex flex-col gap-3"
+                >
+                  <Textarea
+                    ref={basicInputRef}
+                    className="min-h-[120px] rounded p-2 font-mono text-sm outline-none focus-visible:outline-none focus-visible:ring-0"
+                    placeholder="Input one valid link per line, e.g. https://example.com"
+                    value={basicInput}
+                    onChange={(e) => setBasicInput(e.target.value)}
+                    disabled={basicLoading}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={basicLoading || !basicInput.trim()}
+                  >
+                    {basicLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Check Links
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="advanced"
+                initial={{ rotateY: 90, opacity: 0 }}
+                animate={{ rotateY: 0, opacity: 1 }}
+                exit={{ rotateY: -90, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ transformStyle: 'preserve-3d' }}
+              >
+                <form
+                  onSubmit={submitAdvancedToChecking}
+                  className="flex flex-col gap-3 sm:flex-row"
+                >
+                  <Input
+                    type="text"
+                    placeholder="Enter website URL (e.g., example.com)"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    className="flex-1 outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={loading}
+                  />
+                  <Button type="submit" disabled={loading || !url}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {extracting ? 'Extracting links...' : 'Checking...'}
+                      </>
+                    ) : (
+                      <>
+                        <Search className="mr-2 h-4 w-4" />
+                        Check Links
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {error && (
