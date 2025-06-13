@@ -394,7 +394,7 @@ export default function Home() {
         setRssLinks(checkedRssLinks as RssInfo[])
       }
 
-      const checkedResults = await getLinkCheckedResults({
+      await getLinkCheckedResults({
         collectedLinks
       })
     } catch (err) {
@@ -487,7 +487,7 @@ export default function Home() {
           <div className="rounded-full border bg-white p-1 shadow-lg">
             <button
               onClick={() => setIsAdvanced(false)}
-              className={`rounded-full px-6 py-2 transition-all duration-300 ${
+              className={`rounded-full px-3 py-2 text-sm transition-all duration-300 md:px-6 md:text-base ${
                 !isAdvanced
                   ? 'bg-blue-500 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
@@ -497,7 +497,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setIsAdvanced(true)}
-              className={`rounded-full px-6 py-2 transition-all duration-300 ${
+              className={`rounded-full px-3 py-2 text-sm transition-all duration-300 md:px-6 md:text-base ${
                 isAdvanced
                   ? 'bg-purple-500 text-white shadow-md'
                   : 'text-gray-600 hover:text-gray-800'
