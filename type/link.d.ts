@@ -1,13 +1,21 @@
 declare module 'jsdom'
 
-export type LinkStatus = LinkInfo & {
+export type BasicLinkStatus = {
+  url: string
   status: number | null
   ok: boolean
   error?: string
   checking?: boolean
 }
 
-export type LinkSummary = {
+export type AdvancedLinkStatus = AdvancedLinkInfo & {
+  status: number | null
+  ok: boolean
+  error?: string
+  checking?: boolean
+}
+
+export type AdvancedLinkSummary = {
   total: number
   external: number
   internal: number
@@ -15,7 +23,7 @@ export type LinkSummary = {
   rss: number
 }
 
-export type LinkInfo = {
+export type AdvancedLinkInfo = {
   url: string
   isExternal: boolean
   isNoFollow: boolean
