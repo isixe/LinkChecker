@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
       const response = await fetch(url, {
-        method: 'HEAD',
+        method: 'GET',
         redirect: 'follow',
         signal: controller.signal,
         headers: {
