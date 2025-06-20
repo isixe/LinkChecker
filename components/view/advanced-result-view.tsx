@@ -393,7 +393,7 @@ export default function ResultView({ state }: ResultViewProps) {
                   No results
                 </div>
               ) : (
-                <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap break-all font-mono text-xs">
+                <pre className="overflow-y-auto whitespace-pre-wrap break-all font-mono text-xs">
                   {filteredResults.map((r) => r.url).join('\n')}
                 </pre>
               )}

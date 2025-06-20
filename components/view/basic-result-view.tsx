@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BasicLinkStatus } from '@/type/link'
 import {
   AlertCircle,
+  ArrowUpRight,
   Check,
   CheckCircle,
   Copy,
@@ -21,6 +22,12 @@ import {
   Search
 } from 'lucide-react'
 import { useState } from 'react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '../ui/tooltip'
 
 export interface BasicResultViewState {
   workingCount: number
@@ -133,10 +140,40 @@ export default function ResultView({ state }: ResultViewProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredResults.map((r, idx) => (
+                filteredResults.map((link, idx) => (
                   <TableRow key={idx}>
                     <TableCell className="break-all font-mono text-xs">
-                      {r.url}
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1">
+                            <span className="line-clamp-2">{link.url}</span>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <a
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-muted-foreground hover:text-primary"
+                                  >
+                                    <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0" />
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Open link in new tab</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          {link.text && link.text !== link.url && (
+                            <div className="mt-1 font-sans text-muted-foreground">
+                              {link.text.length > 50
+                                ? link.text.substring(0, 50) + '...'
+                                : link.text}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {loading ? (
@@ -144,8 +181,8 @@ export default function ResultView({ state }: ResultViewProps) {
                           <Loader2 className="h-4 w-4 animate-spin" />{' '}
                           Checking...
                         </span>
-                      ) : typeof r.status === 'number' ? (
-                        <span>{r.status}</span>
+                      ) : typeof link.status === 'number' ? (
+                        <span>{link.status}</span>
                       ) : (
                         <span>None</span>
                       )}
@@ -156,26 +193,34 @@ export default function ResultView({ state }: ResultViewProps) {
                           <Loader2 className="h-4 w-4 animate-spin" />{' '}
                           Checking...
                         </span>
-                      ) : r.ok ? (
+                      ) : link.ok ? (
                         <span className="flex items-center gap-1 text-green-600">
                           <CheckCircle className="h-4 w-4" /> Working
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-red-600">
-                          <AlertCircle className="h-4 w-4" /> Broken
-                          {r.error && (
-                            <span className="ml-2 text-xs text-gray-400">
-                              {r.error}
-                            </span>
+                        <>
+                          {link.error && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="flex cursor-pointer items-center gap-1 text-red-600">
+                                    <AlertCircle className="h-4 w-4" /> Broken
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{link.error}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
-                        </span>
+                        </>
                       )}
                     </TableCell>
                     <TableCell>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onQuickAdvancedCheck(r.url)}
+                        onClick={() => onQuickAdvancedCheck(link.url)}
                       >
                         <Search className="mr-1 h-4 w-4" />
                         Advanced Check
@@ -215,7 +260,7 @@ export default function ResultView({ state }: ResultViewProps) {
               No results
             </div>
           ) : (
-            <pre className="max-h-60 overflow-y-auto whitespace-pre-wrap break-all font-mono text-xs">
+            <pre className="overflow-y-auto whitespace-pre-wrap break-all font-mono text-xs">
               {filteredResults.map((r) => r.url).join('\n')}
             </pre>
           )}
