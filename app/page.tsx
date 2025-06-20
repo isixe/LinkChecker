@@ -324,17 +324,24 @@ export default function Home() {
           const err = await res.json()
           results.push({
             url,
+            text: '',
             ok: false,
             error: err.error || 'Request failed',
             status: res.status
           })
         } else {
           const data = await res.json()
-          results.push({ url, ok: data.ok, status: data.status })
+          results.push({
+            url,
+            text: data.text,
+            ok: data.ok,
+            status: data.status
+          })
         }
       } catch (err) {
         results.push({
           url,
+          text: '',
           ok: false,
           error: err instanceof Error ? err.message : 'Request error',
           status: null

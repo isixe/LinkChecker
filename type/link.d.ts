@@ -2,6 +2,7 @@ declare module 'jsdom'
 
 export type BasicLinkStatus = {
   url: string
+  text: string
   status: number | null
   ok: boolean
   error?: string

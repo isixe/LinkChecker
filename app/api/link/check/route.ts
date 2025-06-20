@@ -24,8 +24,13 @@ export async function POST(request: NextRequest) {
 
       clearTimeout(timeoutId)
 
+      const responseText = await response.text()
+      const titleMatch = responseText.match(/<title>([^<]*)<\/title>/i)
+      const titleText = titleMatch ? titleMatch[1].trim() : ''
+
       return NextResponse.json({
         url,
+        text: titleText,
         status: response.status,
         ok: response.ok
       })
