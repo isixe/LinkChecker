@@ -3,6 +3,7 @@ import Header from '@/components/layout/header'
 import { Toaster } from '@/components/ui/toaster'
 import '@/styles/globals.css'
 import type { Metadata } from 'next'
+import Script from 'next/script'
 
 import { headers } from 'next/headers'
 
@@ -37,8 +38,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const analyticsScript = process.env.ANALYTICS_SCRIPT ?? ''
+
   return (
     <html lang="en">
+      <head>
+        {analyticsScript && (
+          <Script
+            src={analyticsScript}
+            id="analytics"
+            data-website-id="link-checker"
+            defer
+          />
+        )}
+      </head>
       <body className="flex min-h-screen flex-col">
         <Header />
         <main className="container mx-auto flex-1 px-4 py-10">{children} </main>
