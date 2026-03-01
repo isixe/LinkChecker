@@ -38,19 +38,19 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const analyticsScript = process.env?.ANALYTICS_SCRIPT ?? ''
+  const analyticsScript = process.env.ANALYTICS_SCRIPT || ''
 
   return (
     <html lang="en">
       <head>
-        {analyticsScript && (
+        {analyticsScript ? (
           <Script
             src={analyticsScript}
             id="analytics"
             data-website-id="link-checker"
-            defer
+            strategy="afterInteractive"
           />
-        )}
+        ) : null}
       </head>
       <body className="flex min-h-screen flex-col">
         <Header />
