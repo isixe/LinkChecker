@@ -23,7 +23,8 @@ import {
 } from '@/type/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertCircle, Info, Loader2, Search } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
 
 interface PreProcessFormResult {
   valid: boolean
@@ -37,7 +38,10 @@ interface GetFinalFilteredResultsParams {
   selectedDomain: string
 }
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams()
+  const urlParam = searchParams.get('url')
+
   const [url, setUrl] = useState('')
   const [error, setError] = useState<{
     message: string
@@ -75,9 +79,16 @@ export default function Home() {
   const [shouldAutoCheck, setShouldAutoCheck] = useState(false)
 
   useEffect(() => {
-    if (shouldAutoCheck && isAdvanced && url) {
+    if (urlParam && isValidUrl(urlParam)) {
+      setIsAdvanced(false)
+      setBasicInput(urlParam)
+      setShouldAutoCheck(true)
+    }
+  }, [urlParam])
+
+  useEffect(() => {
+    if (shouldAutoCheck && (url || basicInput)) {
       setShouldAutoCheck(false)
-      // Simulate form submit
       setTimeout(() => {
         const form = document.querySelector('form')
         if (form) {
@@ -87,11 +98,11 @@ export default function Home() {
         }
       }, 1000)
     }
-  }, [shouldAutoCheck, isAdvanced, url])
+  }, [shouldAutoCheck, url, basicInput])
 
-  const quickAdvancedCheck = (url: string) => {
+  const quickAdvancedCheck = (checkUrl: string) => {
     setIsAdvanced(true)
-    setUrl(url)
+    setUrl(checkUrl)
     setShouldAutoCheck(true)
     setTimeout(() => {
       if (basicInputRef.current) {
@@ -100,8 +111,8 @@ export default function Home() {
     }, 100)
   }
 
-  function isValidUrl(url: string): boolean {
-    return /^https?:\/\/\S+$/i.test(url.trim())
+  function isValidUrl(testUrl: string): boolean {
+    return /^https?:\/\/\S+$/i.test(testUrl.trim())
   }
 
   const preProcessBasicForm = (input: string) => {
@@ -313,17 +324,17 @@ export default function Home() {
 
     const results: BasicLinkStatus[] = []
     for (let i = 0; i < urls.length; i++) {
-      const url = urls[i]
+      const urlItem = urls[i]
       try {
         const res = await fetch('/api/link/check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url: urlItem })
         })
         if (!res.ok) {
           const err = await res.json()
           results.push({
-            url,
+            url: urlItem,
             text: '',
             ok: false,
             error: err.error || 'Request failed',
@@ -332,7 +343,7 @@ export default function Home() {
         } else {
           const data = await res.json()
           results.push({
-            url,
+            url: urlItem,
             text: data.text,
             ok: data.ok,
             status: data.status
@@ -340,7 +351,7 @@ export default function Home() {
         }
       } catch (err) {
         results.push({
-          url,
+          url: urlItem,
           text: '',
           ok: false,
           error: err instanceof Error ? err.message : 'Request error',
@@ -489,7 +500,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Mode Toggle */}
         <div className="mb-8 flex justify-center">
           <div className="rounded-full border bg-white p-1 shadow-lg">
             <button
@@ -629,5 +639,25 @@ export default function Home() {
           )}
       </div>
     </div>
+  )
+}
+
+function HomeLoading() {
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold md:text-4xl">Loading...</h1>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<HomeLoading />}>
+      <HomeContent />
+    </Suspense>
   )
 }
