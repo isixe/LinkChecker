@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url,
       siteName: 'LinkChecker',
       locale: 'en',
-      images: '/images/preview.png'
+      images: `${url}/images/preview.png`
     }
   }
 }
